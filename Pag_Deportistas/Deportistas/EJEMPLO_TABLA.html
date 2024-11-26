@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo de HTML, CSS y JavaScript</title>
+    <style>
+        /* Estilo básico para el cuerpo de la página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 20px;
+        }
+        /* Estilo para el contenedor principal */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        /* Estilo para el título principal */
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        /* Estilo para los grupos de formulario */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        /* Estilo para las etiquetas de los campos */
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        /* Estilo para los campos de entrada y select */
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        /* Estilo para la tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        /* Estilo para los bordes de la tabla */
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        /* Estilo para el espacio interior de celdas */
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        /* Estilo para los encabezados de la tabla */
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Estilo para los botones */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            text-align: center;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        /* Efecto hover para los botones */
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ejemplo de Controles
+        </h1>
+        
+        <!-- Campo de texto para el nombre -->
+        <div class="form-group">
+            <label for="name">Nombre:</label>
+            <input type="text" id="name" placeholder="Ingresa el nombre">
+        </div>
+        
+        <!-- Campo de texto para la edad -->
+        <div class="form-group">
+            <label for="age">Edad:</label>
+            <input type="text" id="age" placeholder="Ingresa la edad">
+        </div>
+        
+        <!-- Combo para seleccionar el país -->
+        <div class="form-group">
+            <label for="country">País:</label>
+            <select id="country">
+                <option value="México">México</option>
+                <option value="Argentina">Argentina</option>
+                <option value="España">España</option>
+                <option value="Colombia">Colombia</option>
+                <option value="Chile">Chile</option>
+            </select>
+        </div>
+        
+        <!-- Campo de texto para sueldo anual -->
+        <div class="form-group">
+            <label for="annualSalary">Sueldo Anual:</label>
+            <input type="text" id="annualSalary" placeholder="Ingresa sueldo anual">
+        </div>
+
+        <!-- Campo de texto para sueldo mensual -->
+        <div class="form-group">
+            <label for="monthlySalary">Sueldo Mensual:</label>
+            <input type="text" id="monthlySalary" placeholder="Ingresa sueldo mensual">
+        </div>
+
+        <!-- Combo para seleccionar el club -->
+        <div class="form-group">
+            <label for="club">Club:</label>
+            <select id="club">
+                <option value="Chivas">Chivas</option>
+                <option value="America">América</option>
+                <option value="CruzAzul">Cruz Azul</option>
+            </select>
+        </div>
+        
+        <!-- Botón para agregar datos -->
+        <button class="btn" onclick="addData()">Agregar Datos</button>
+        
+        <h2>Tabla de Datos</h2>
+        <!-- Tabla para mostrar los datos ingresados -->
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>País</th>
+                    <th>Sueldo Anual</th>
+                    <th>Sueldo Mensual</th>
+                    <th>Club</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3">Totales</th>
+                    <th id="totalAnnual">0.00</th>
+                    <th id="totalMonthly">0.00</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        // Array para almacenar los datos de los futbolistas
+        let data = [];
+        // Variables para los totales de sueldos
+        let totalAnnual = 0;
+        let totalMonthly = 0;
+
+        // Función para agregar datos a la tabla
+        function addData() {
+            // Obtener valores de los campos de entrada
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const country = document.getElementById('country').value;
+            const annualSalary = parseFloat(document.getElementById('annualSalary').value);
+            const monthlySalary = parseFloat(document.getElementById('monthlySalary').value);
+            const club = document.getElementById('club').value;
+
+            // Validar que todos los campos estén completos y sean válidos
+            if (name === "" || age === "" || country === "" || isNaN(annualSalary) || isNaN(monthlySalary) || club === "") {
+                alert("Por favor, completa todos los campos.");
+                return; // Salir de la función si hay campos vacíos
+            }
+
+            // Agregar los datos al array
+            data.push([name, age, country, annualSalary, monthlySalary, club]);
+
+            // Limpiar el contenido de la tabla antes de volver a llenarla
+            const tableBody = document.querySelector("#dataTable tbody");
+            tableBody.innerHTML = "";
+
+            // Reiniciar los totales
+            totalAnnual = 0;
+            totalMonthly = 0;
+
+            // Llenar la tabla con los datos
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                // Crear un enlace al club
+                const clubLink = <a href="https://www.${row[5].toLowerCase()}.com" target="_blank">${row[5]}</a>;
+                row[5] = clubLink; // Actualizar la fila con el enlace del club
+                row.forEach((cell, index) => {
+                    const td = document.createElement('td');
+                    // Mostrar el enlace solo en la columna del club
+                    td.innerHTML = (index === 5) ? row[5] : cell;
+                    tr.appendChild(td); // Añadir la celda a la fila
+                });
+                tableBody.appendChild(tr); // Añadir la fila a la tabla
+
+                // Sumar los sueldos para los totales
+                totalAnnual += row[3];
+                totalMonthly += row[4];
+            });
+
+            // Mostrar los totales en el pie de la tabla
+            document.getElementById('totalAnnual').textContent = totalAnnual.toFixed(2);
+            document.getElementById('totalMonthly').textContent = totalMonthly.toFixed(2);
+
+            // Limpiar los campos de entrada
+            document.getElementById('name').value = "";
+            document.getElementById('age').value = "";
+            document.getElementById('annualSalary').value = "";
+            document.getElementById('monthlySalary').value = "";
+            document.getElementById('club').value = "Chivas"; // Restablecer el combo al primer valor
+        }
+    </script>
+</body>
+</html>
