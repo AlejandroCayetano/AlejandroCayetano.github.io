@@ -40,6 +40,8 @@ function validar(form) {
         return false;
     }
 
+    alert(nombre);
+    alert(edad);
     // Si todo es válido
     return true;
 }
