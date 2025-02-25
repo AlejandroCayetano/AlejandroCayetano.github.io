@@ -1,6 +1,13 @@
 function limpiarEntrada(input) {
-    // Expresión regular para eliminar <script>...</script> y cualquier intento de inyección
-    return input.replace(/<script.*?>.*?<\/script>/gi, "").replace(/[<>\/]/g, "");
+    // Expresión regular para eliminar todas las etiquetas HTML
+    var inputLimpio = input.replace(/<[^>]*>/g, "");
+
+    // Si se eliminaron etiquetas, se muestra una alerta y se limpia el campo
+    if (input !== inputLimpio) {
+        alert("Se han detectado y eliminado etiquetas HTML.");
+    }
+
+    return inputLimpio;
 }
 
 function validar(form) {
@@ -8,6 +15,7 @@ function validar(form) {
     var nombre = limpiarEntrada(form.nombre.value.trim());
     if (nombre === "") {
         alert("Por favor, ingrese su nombre.");
+        form.nombre.value = "";  // Borra el contenido del input
         return false;
     }
 
