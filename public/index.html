@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billie Eilish - Registro de Gustos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5dc; /* Crema suave */
+            color: #4a403a; /* Café claro */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1 {
+            color: #d4a373; /* Amarillo dorado suave */
+        }
+
+        .form-control, .btn, .form-select {
+            border-radius: 12px;
+        }
+
+        .btn-primary {
+            background-color: #d4a373; /* Amarillo dorado suave */
+            border-color: #d4a373;
+        }
+
+        .btn-primary:hover {
+            background-color: #c2996c;
+            border-color: #c2996c;
+        }
+
+        .btn-success {
+            background-color: #b8a189; /* Beige suave */
+            border-color: #b8a189;
+        }
+
+        .btn-success:hover {
+            background-color: #a58e7a;
+            border-color: #a58e7a;
+        }
+
+        .container {
+            max-width: 700px;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #fffaf0; /* Blanco marfil */
+            border: 2px solid #9a8873; /* Borde más marcado */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra más visible */
+            border-radius: 12px;
+        }
+    </style>
+</head>
+
+<body style="background-image: url('https://wallpapercave.com/wp/wp9579073.jpg'); background-size: cover; background-position: center center; background-attachment: fixed; margin: 0;">
+    <div class="container">
+        <h1 class="mb-4 text-center">Formulario Billie Eilish ♥</h1>
+
+        <form action="/agregarUsuario" method="POST" class="row g-3">
+            <div class="col-12">
+                <input type="text" name="nombre" placeholder="Nombre" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <input type="number" name="edad" placeholder="Edad" min="0" max="120" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <select name="album" class="form-select" required>
+                    <option value="" disabled selected>Álbum Favorito</option>
+                    <option value="when we all fall asleep, where do we go?">When We All Fall Asleep, Where Do We Go?</option>
+                    <option value="Happier Than Ever">Happier Than Ever</option>
+                    <option value="HIT ME HARD AND SOFT">HIT ME HARD AND SOFT</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <input type="text" name="cancion" placeholder="Canción Favorita" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <input type="text" name="video" placeholder="Video Favorito" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <select name="perfume" class="form-select" required>
+                    <option value="" disabled selected>Perfume Favorito</option>
+                    <option value="eilish 1">Eilish 1</option>
+                    <option value="eilish 2">Eilish 2</option>
+                    <option value="eilish 3">Eilish 3</option>
+                    <option value="your turn">Your Turn</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <input type="text" name="lyric" placeholder="Frase Favorita" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <input type="text" name="documental" placeholder="Documental Favorito" class="form-control">
+            </div>
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary">Registrar</button>
+            </div>
+        </form>
+
+        <hr class="my-4">
+        <div class="text-center">
+            <a href="/obtenerUsuario" class="btn btn-success">Ver Registros ♥</a>
+        </div>
+    </div>
+</body>
+
+</html>
