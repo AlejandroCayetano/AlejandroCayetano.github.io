@@ -27,17 +27,52 @@ function sanitizeInput(input) {
 app.post('/agregarUsuario', (req, res) => {
     let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
-    // Limitar la longitud del texto
-    if (nombre.length > 100 || edad.length > 100 || cancion.length > 100 || video.length > 100 || lyric.length > 100 || documental.length > 100) {
-        return res.status(400).send("Los inputs no pueden contener más de 100 caracteres.");
+    // Validar tipo de dato correcto
+    if (typeof nombre !== 'string' || typeof album !== 'string' || typeof cancion !== 'string' || 
+        typeof video !== 'string' || typeof perfume !== 'string' || typeof lyric !== 'string' || 
+        typeof documental !== 'string') {
+        return res.send(`
+            <script>
+                alert("Error: Todos los campos de texto deben ser cadenas de caracteres.");
+                window.history.back();
+            </script>
+        `);
     }
 
-    // Verificar que los valores no estén vacíos y no sean solo espacios
-    if (!nombre.trim() || !edad.trim() || !cancion.trim() || !video.trim() || !lyric.trim() || !documental.trim()) {
-        return res.status(400).send("Todos los campos son obligatorios.");
+    // Convertir edad a número y validar
+    edad = Number(edad);
+    if (!Number.isInteger(edad) || edad <= 0) {
+        return res.send(`
+            <script>
+                alert("Error: El campo 'edad' debe ser un número entero válido y mayor a 0.");
+                window.history.back();
+            </script>
+        `);
     }
 
-    // Sanitizar las entradas para evitar HTML/JS
+    // Validar que exactamente 8 campos están llenos
+    const valores = [nombre, edad, album, cancion, video, perfume, lyric, documental];
+    if (valores.filter(val => val !== undefined && val.toString().trim() !== '').length !== 8) {
+        return res.send(`
+            <script>
+                alert("Error: Debes completar los 8 campos obligatorios.");
+                window.history.back();
+            </script>
+        `);
+    }
+
+    // Limitar la longitud del texto a 100 caracteres
+    if (valores.some(val => val.toString().length > 100)) {
+        return res.send(`
+            <script>
+                alert("Error: Los inputs no pueden contener más de 100 caracteres.");
+                window.history.back();
+            </script>
+        `);
+    }
+
+    // Sanitizar las entradas para evitar inyección de HTML/JS
+    const sanitizeInput = (input) => input.replace(/<[^>]*>?/gm, '');
     nombre = sanitizeInput(nombre);
     cancion = sanitizeInput(cancion);
     video = sanitizeInput(video);
@@ -50,11 +85,21 @@ app.post('/agregarUsuario', (req, res) => {
     const validPerfumes = ['eilish 1', 'eilish 2', 'eilish 3', 'your turn'];
 
     if (!validAlbums.includes(album)) {
-        return res.status(400).send("Álbum no válido.");
+        return res.send(`
+            <script>
+                alert("Error: Álbum no válido.");
+                window.history.back();
+            </script>
+        `);
     }
 
     if (!validPerfumes.includes(perfume)) {
-        return res.status(400).send("Perfume no válido.");
+        return res.send(`
+            <script>
+                alert("Error: Perfume no válido.");
+                window.history.back();
+            </script>
+        `);
     }
 
     // Insertar datos en la base de datos
@@ -63,12 +108,24 @@ app.post('/agregarUsuario', (req, res) => {
         (err, respuesta) => {
             if (err) {
                 console.log("Error al conectar", err);
-                return res.status(500).send("Error al conectar");
+                return res.send(`
+                    <script>
+                        alert("Error al conectar con la base de datos.");
+                        window.history.back();
+                    </script>
+                `);
             }
-            return res.send("<h1>Registro exitoso</h1><a href='/obtenerUsuario'>Ver usuarios registrados</a>");
+            return res.send(`
+                <script>
+                    alert("Registro exitoso.");
+                    window.location.href = '/obtenerUsuario';
+                </script>
+            `);
         }
     );
 });
+
+
 
 function escapeHTML(text) {
     return text
@@ -90,7 +147,6 @@ function escapeHTML(text) {
 }
 
 // Ruta para obtener los usuarios y mostrarlos
-
 app.get('/obtenerUsuario', (req, res) => {
     con.query('SELECT * FROM gustos', (err, respuesta) => {
         if (err) {
@@ -243,8 +299,6 @@ app.get('/obtenerUsuario', (req, res) => {
         return res.send(resultadoHTML);
     });
 });
-
-
 
 // Ruta para eliminar un usuario
 app.get('/eliminarUsuario', (req, res) => {
