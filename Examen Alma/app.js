@@ -4,7 +4,6 @@ var bodyParser = require('body-parser');
 const e = require("express");
 var app = express();
 
-// Conexión a la base de datos MySQL
 var con = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -13,21 +12,21 @@ var con = mysql.createConnection({
 });
 con.connect();
 
-// Middleware para procesar formularios
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Función para sanitizar los datos (eliminar etiquetas HTML/JS)
+
 function sanitizeInput(input) {
-    return input.replace(/<[^>]*>/g, '');  // Remueve cualquier etiqueta HTML
+    return input.replace(/<[^>]*>/g, '');  
 }
 
 // Ruta para agregar un usuario
 app.post('/agregarUsuario', (req, res) => {
     let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
-    // Validar tipo de dato correcto
+  
     if (typeof nombre !== 'string' || typeof album !== 'string' || typeof cancion !== 'string' || 
         typeof video !== 'string' || typeof perfume !== 'string' || typeof lyric !== 'string' || 
         typeof documental !== 'string') {
@@ -39,7 +38,7 @@ app.post('/agregarUsuario', (req, res) => {
         `);
     }
 
-    // Convertir edad a número y validar
+   
     edad = Number(edad);
     if (!Number.isInteger(edad) || edad <= 0) {
         return res.send(`
@@ -50,7 +49,7 @@ app.post('/agregarUsuario', (req, res) => {
         `);
     }
 
-    // Validar que exactamente 8 campos están llenos
+  
     const valores = [nombre, edad, album, cancion, video, perfume, lyric, documental];
     if (valores.filter(val => val !== undefined && val.toString().trim() !== '').length !== 8) {
         return res.send(`
@@ -61,7 +60,7 @@ app.post('/agregarUsuario', (req, res) => {
         `);
     }
 
-    // Limitar la longitud del texto a 100 caracteres
+    
     if (valores.some(val => val.toString().length > 100)) {
         return res.send(`
             <script>
@@ -71,7 +70,7 @@ app.post('/agregarUsuario', (req, res) => {
         `);
     }
 
-    // Sanitizar las entradas para evitar inyección de HTML/JS
+  
     const sanitizeInput = (input) => input.replace(/<[^>]*>?/gm, '');
     nombre = sanitizeInput(nombre);
     cancion = sanitizeInput(cancion);
@@ -80,7 +79,7 @@ app.post('/agregarUsuario', (req, res) => {
     lyric = sanitizeInput(lyric);
     documental = sanitizeInput(documental);
 
-    // Validar que los valores de las opciones seleccionadas sean válidos
+    
     const validAlbums = ['when we all fall asleep, where do we go?', 'Happier Than Ever', 'HIT ME HARD AND SOFT'];
     const validPerfumes = ['eilish 1', 'eilish 2', 'eilish 3', 'your turn'];
 
@@ -102,7 +101,7 @@ app.post('/agregarUsuario', (req, res) => {
         `);
     }
 
-    // Insertar datos en la base de datos
+  
     con.query('INSERT INTO gustos (nombre, edad, album, cancion, video, perfume, lyric, documental) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
         [nombre, edad, album, cancion, video, perfume, lyric, documental], 
         (err, respuesta) => {
@@ -258,7 +257,7 @@ app.get('/obtenerUsuario', (req, res) => {
                         </thead>
                         <tbody>`;
 
-        // Llenar la tabla con los datos de la base de datos
+        
         respuesta.forEach(gustos => {
             resultadoHTML += `
                 <tr>
@@ -285,7 +284,7 @@ app.get('/obtenerUsuario', (req, res) => {
             </div>
         </div>`;
 
-        // Agregar JavaScript para la confirmación de eliminación
+    
         resultadoHTML += `
         <script>
             function confirmarEliminacion(id) {
@@ -312,7 +311,6 @@ app.get('/eliminarUsuario', (req, res) => {
     });
 });
 
-// Ruta para editar un usuario (GET)
 app.get('/editarUsuario', (req, res) => {
     const id = req.query.id;
     con.query('SELECT * FROM gustos WHERE id = ?', [id], (err, respuesta) => {
@@ -358,24 +356,21 @@ app.get('/editarUsuario', (req, res) => {
 app.post('/editarUsuario', (req, res) => {
     const { id, nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
-    // Validar que los campos no estén vacíos
+   
     if (!nombre.trim() || !edad.trim() || !album.trim() || !cancion.trim() || !video.trim() || !perfume.trim() || !lyric.trim() || !documental.trim()) {
         return res.status(400).send("Todos los campos son obligatorios y no deben estar vacíos.");
     }
 
-    // Limitar la longitud de los campos para evitar entradas demasiado largas
     if (nombre.length > 100 || edad.length > 100 || cancion.length > 100 || video.length > 100 || lyric.length > 100 || documental.length > 100) {
         return res.status(400).send("Los campos no pueden exceder los 100 caracteres.");
     }
 
-    // Sanitizar las entradas para evitar etiquetas HTML/JS
     const sanitizedNombre = sanitizeInput(nombre);
     const sanitizedCancion = sanitizeInput(cancion);
     const sanitizedVideo = sanitizeInput(video);
     const sanitizedLyric = sanitizeInput(lyric);
     const sanitizedDocumental = sanitizeInput(documental);
 
-    // Validar que los valores de las opciones seleccionadas sean válidos
     const validAlbums = ['when we all fall asleep, where do we go?', 'Happier Than Ever', 'HIT ME HARD AND SOFT'];
     const validPerfumes = ['eilish 1', 'eilish 2', 'eilish 3', 'your turn'];
 
@@ -387,7 +382,6 @@ app.post('/editarUsuario', (req, res) => {
         return res.status(400).send("Perfume no válido.");
     }
 
-    // Realizar la actualización en la base de datos
     con.query('UPDATE gustos SET nombre = ?, edad = ?, album = ?, cancion = ?, video = ?, perfume = ?, lyric = ?, documental = ? WHERE id = ?',
         [sanitizedNombre, edad, album, sanitizedCancion, sanitizedVideo, perfume, sanitizedLyric, sanitizedDocumental, id],
         (err, respuesta) => {
@@ -400,8 +394,6 @@ app.post('/editarUsuario', (req, res) => {
     );
 });
 
-
-// Iniciar el servidor en el puerto 3000
 app.listen(3000, () => {
     console.log("Servidor escuchando en el puerto 3000");
 });
