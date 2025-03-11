@@ -22,7 +22,7 @@ function sanitizeInput(input) {
     return input.replace(/<[^>]*>/g, '');  
 }
 
-// Ruta para agregar un usuario
+//agregar un usuario
 app.post('/agregarUsuario', (req, res) => {
     let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
@@ -135,7 +135,6 @@ function escapeHTML(text) {
         .replace(/'/g, '&#039;');
 }
 
-// Función para escapar caracteres especiales de HTML
 function escapeHTML(text) {
     return text
         .replace(/&/g, '')
@@ -145,7 +144,7 @@ function escapeHTML(text) {
         .replace(/'/g, '');
 }
 
-// Ruta para obtener los usuarios y mostrarlos
+//obtener los usuarios y mostrarlos
 app.get('/obtenerUsuario', (req, res) => {
     con.query('SELECT * FROM gustos', (err, respuesta) => {
         if (err) {
@@ -299,7 +298,7 @@ app.get('/obtenerUsuario', (req, res) => {
     });
 });
 
-// Ruta para eliminar un usuario
+//eliminar un usuario
 app.get('/eliminarUsuario', (req, res) => {
     const id = req.query.id;
     con.query('DELETE FROM gustos WHERE id = ?', [id], (err, respuesta) => {
@@ -352,7 +351,7 @@ app.get('/editarUsuario', (req, res) => {
     });
 });
 
-// Ruta para actualizar un usuario (POST)
+//actualizar un usuario 
 app.post('/editarUsuario', (req, res) => {
     const { id, nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
