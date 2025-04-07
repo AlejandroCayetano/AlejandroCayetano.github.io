@@ -3,16 +3,115 @@ const mysql = require("mysql2");
 var bodyParser = require('body-parser');
 const e = require("express");
 var app = express();
+const session = require('express-session');
+const bcrypt = require('bcrypt');
+const path = require('path');
 
-var con = mysql.createConnection({
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'claveSuperSecreta',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7
+}
+}));
+
+const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'HalleysComet_13',
-    database: 'billie_db'
+    password: 'HalleysComet_13', 
+    database: 'billie_db' 
+  });
+  
+  app.get('/', (req, res) => {
+    if (req.session.usuarioId) return res.redirect('/agregarUsuario');
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  });
+  
+  app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  });
+  
+  // Mostrar registro
+  app.get('/registro', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'registro.html'));
+  });
+  
+  // Procesar registro
+  app.post('/registro', async (req, res) => {
+    const { nombre, correo, contrasena } = req.body;
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+  
+    db.query('SELECT * FROM usuarios WHERE correo = ?', [correo], (err, resultados) => {
+        if (err) {
+          console.error('Error al verificar correo:', err);
+          return res.status(500).send('Error al verificar el correo');
+        }
+    
+        if (resultados.length > 0) {
+          // Ya existe un usuario con ese correo
+          return res.send('Este correo ya está registrado');
+        }
+    
+        // Si no existe, hashear contraseña e insertar
+        bcrypt.hash(contrasena, 10, (err, hash) => {
+          if (err) {
+            console.error('Error al cifrar contraseña:', err);
+            return res.status(500).send('Error al registrar');
+          }
+    
+          const sql = 'INSERT INTO usuarios (nombre, correo, contrasena) VALUES (?, ?, ?)';
+          db.query(sql, [nombre, correo, hash], (err, result) => {
+            if (err) {
+              console.error('Error al registrar:', err);
+              return res.status(500).send('Error al registrar');
+            }
+            res.redirect('/');
+          });
+        });
+      });
+    });
+  
+  // Procesar login
+  app.post('/login', (req, res) => {
+    const { correo, contrasena } = req.body;
+  
+    db.query('SELECT * FROM usuarios WHERE correo = ?', [correo], async (err, resultados) => {
+      if (err) return res.send('Error en la base de datos');
+      if (resultados.length === 0) return res.send('Usuario no encontrado');
+  
+      const usuario = resultados[0];
+      const match = await bcrypt.compare(contrasena, usuario.contrasena);
+      
+      if (match) {
+      
+        req.session.usuarioId = usuario.id;
+        req.session.nombre = usuario.nombre;  
+        
+        res.redirect('/agregarUsuario'); 
+      } else {
+        res.send('Contraseña incorrecta');
+      }
+    });
 });
-con.connect();
+
+  // Cerrar sesión
+  app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+      res.redirect('/');
+    });
+  });
+
+  function protegerRuta(req, res, next) {
+    if (!req.session.usuarioId) {
+      return res.redirect('/');
+    }
+    next();
+  }
 
 
+  
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -21,109 +120,6 @@ app.use(express.static('public'));
 function sanitizeInput(input) {
     return input.replace(/<[^>]*>/g, '');  
 }
-
-//agregar un usuario
-app.post('/agregarUsuario', (req, res) => {
-    let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
-
-  
-    if (typeof nombre !== 'string' || typeof album !== 'string' || typeof cancion !== 'string' || 
-        typeof video !== 'string' || typeof perfume !== 'string' || typeof lyric !== 'string' || 
-        typeof documental !== 'string') {
-        return res.send(`
-            <script>
-                alert("Error: Todos los campos de texto deben ser cadenas de caracteres.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-   
-    edad = Number(edad);
-    if (!Number.isInteger(edad) || edad <= 0) {
-        return res.send(`
-            <script>
-                alert("Error: El campo 'edad' debe ser un número entero válido y mayor a 0.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-  
-    const valores = [nombre, edad, album, cancion, video, perfume, lyric, documental];
-    if (valores.filter(val => val !== undefined && val.toString().trim() !== '').length !== 8) {
-        return res.send(`
-            <script>
-                alert("Error: Debes completar los 8 campos obligatorios.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-    
-    if (valores.some(val => val.toString().length > 100)) {
-        return res.send(`
-            <script>
-                alert("Error: Los inputs no pueden contener más de 100 caracteres.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-  
-    const sanitizeInput = (input) => input.replace(/<[^>]*>?/gm, '');
-    nombre = sanitizeInput(nombre);
-    cancion = sanitizeInput(cancion);
-    video = sanitizeInput(video);
-    perfume = sanitizeInput(perfume);
-    lyric = sanitizeInput(lyric);
-    documental = sanitizeInput(documental);
-
-    
-    const validAlbums = ['when we all fall asleep, where do we go?', 'Happier Than Ever', 'HIT ME HARD AND SOFT'];
-    const validPerfumes = ['eilish 1', 'eilish 2', 'eilish 3', 'your turn'];
-
-    if (!validAlbums.includes(album)) {
-        return res.send(`
-            <script>
-                alert("Error: Álbum no válido.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-    if (!validPerfumes.includes(perfume)) {
-        return res.send(`
-            <script>
-                alert("Error: Perfume no válido.");
-                window.history.back();
-            </script>
-        `);
-    }
-
-  
-    con.query('INSERT INTO gustos (nombre, edad, album, cancion, video, perfume, lyric, documental) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-        [nombre, edad, album, cancion, video, perfume, lyric, documental], 
-        (err, respuesta) => {
-            if (err) {
-                console.log("Error al conectar", err);
-                return res.send(`
-                    <script>
-                        alert("Error al conectar con la base de datos.");
-                        window.history.back();
-                    </script>
-                `);
-            }
-            return res.send(`
-                <script>
-                    alert("Registro exitoso.");
-                    window.location.href = '/obtenerUsuario';
-                </script>
-            `);
-        }
-    );
-});
-
 
 
 function escapeHTML(text) {
@@ -135,18 +131,115 @@ function escapeHTML(text) {
         .replace(/'/g, '&#039;');
 }
 
-function escapeHTML(text) {
-    return text
-        .replace(/&/g, '')
-        .replace(/</g, '')
-        .replace(/>/g, '')
-        .replace(/"/g, ';')
-        .replace(/'/g, '');
-}
+//agregar un usuario
+app.get('/agregarUsuario', protegerRuta, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html')); 
+      });
+
+app.post('/agregarUsuario', protegerRuta, (req, res) => {
+        let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
+      
+        // Validación de tipo de datos (todas las entradas de texto deben ser cadenas)
+        if (typeof nombre !== 'string' || typeof album !== 'string' || typeof cancion !== 'string' || 
+            typeof video !== 'string' || typeof perfume !== 'string' || typeof lyric !== 'string' || 
+            typeof documental !== 'string') {
+          return res.send(`
+            <script>
+              alert("Error: Todos los campos de texto deben ser cadenas de caracteres.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        // Validación del campo "edad"
+        edad = Number(edad);
+        if (!Number.isInteger(edad) || edad <= 0) {
+          return res.send(`
+            <script>
+              alert("Error: El campo 'edad' debe ser un número entero válido y mayor a 0.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        // Validación de campos vacíos
+        const valores = [nombre, edad, album, cancion, video, perfume, lyric, documental];
+        if (valores.filter(val => val !== undefined && val.toString().trim() !== '').length !== 8) {
+          return res.send(`
+            <script>
+              alert("Error: Debes completar los 8 campos obligatorios.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        // Validación de longitud de los campos
+        if (valores.some(val => val.toString().length > 100)) {
+          return res.send(`
+            <script>
+              alert("Error: Los inputs no pueden contener más de 100 caracteres.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        // Sanitización de los datos para evitar XSS
+        const sanitizeInput = (input) => input.replace(/<[^>]*>?/gm, '');
+        nombre = sanitizeInput(nombre);
+        cancion = sanitizeInput(cancion);
+        video = sanitizeInput(video);
+        perfume = sanitizeInput(perfume);
+        lyric = sanitizeInput(lyric);
+        documental = sanitizeInput(documental);
+      
+        // Validación de valores permitidos
+        const validAlbums = ['when we all fall asleep, where do we go?', 'Happier Than Ever', 'HIT ME HARD AND SOFT'];
+        const validPerfumes = ['eilish 1', 'eilish 2', 'eilish 3', 'your turn'];
+      
+        if (!validAlbums.includes(album)) {
+          return res.send(`
+            <script>
+              alert("Error: Álbum no válido.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        if (!validPerfumes.includes(perfume)) {
+          return res.send(`
+            <script>
+              alert("Error: Perfume no válido.");
+              window.history.back();
+            </script>
+          `);
+        }
+      
+        // Si todo es correcto, insertar en la base de datos
+        db.query('INSERT INTO gustos (nombre, edad, album, cancion, video, perfume, lyric, documental) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+          [nombre, edad, album, cancion, video, perfume, lyric, documental], 
+          (err, respuesta) => {
+            if (err) {
+              console.log("Error al conectar", err);
+              return res.send(`
+                <script>
+                  alert("Error al conectar con la base de datos.");
+                  window.history.back();
+                </script>
+              `);
+            }
+            return res.send(`
+              <script>
+                alert("Registro exitoso.");
+                window.location.href = '/obtenerUsuario';
+              </script>
+            `);
+          }
+        );
+      });
 
 //obtener los usuarios y mostrarlos
-app.get('/obtenerUsuario', (req, res) => {
-    con.query('SELECT * FROM gustos', (err, respuesta) => {
+app.get('/obtenerUsuario', protegerRuta, (req, res) => {
+    db.query('SELECT * FROM gustos', (err, respuesta) => {
         if (err) {
             console.log("Error al conectar", err);
             return res.status(500).send("Error al consultar usuarios");
@@ -298,10 +391,14 @@ app.get('/obtenerUsuario', (req, res) => {
     });
 });
 
+app.get('/registros', (req, res) => {
+    res.render('registros.html');
+});
+
 //eliminar un usuario
-app.get('/eliminarUsuario', (req, res) => {
+app.get('/eliminarUsuario', protegerRuta, (req, res) => {
     const id = req.query.id;
-    con.query('DELETE FROM gustos WHERE id = ?', [id], (err, respuesta) => {
+    db.query('DELETE FROM gustos WHERE id = ?', [id], (err, respuesta) => {
         if (err) {
             console.log("Error al conectar", err);
             return res.status(500).send("Error al eliminar");
@@ -310,9 +407,9 @@ app.get('/eliminarUsuario', (req, res) => {
     });
 });
 
-app.get('/editarUsuario', (req, res) => {
+app.get('/editarUsuario', protegerRuta, (req, res) => {
     const id = req.query.id;
-    con.query('SELECT * FROM gustos WHERE id = ?', [id], (err, respuesta) => {
+    db.query('SELECT * FROM gustos WHERE id = ?', [id], (err, respuesta) => {
         if (err) {
             console.log("Error al conectar", err);
             return res.status(500).send("Error al consultar el usuario");
@@ -352,7 +449,7 @@ app.get('/editarUsuario', (req, res) => {
 });
 
 //actualizar un usuario 
-app.post('/editarUsuario', (req, res) => {
+app.post('/editarUsuario', protegerRuta, (req, res) => {
     const { id, nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
 
    
@@ -381,7 +478,7 @@ app.post('/editarUsuario', (req, res) => {
         return res.status(400).send("Perfume no válido.");
     }
 
-    con.query('UPDATE gustos SET nombre = ?, edad = ?, album = ?, cancion = ?, video = ?, perfume = ?, lyric = ?, documental = ? WHERE id = ?',
+    db.query('UPDATE gustos SET nombre = ?, edad = ?, album = ?, cancion = ?, video = ?, perfume = ?, lyric = ?, documental = ? WHERE id = ?',
         [sanitizedNombre, edad, album, sanitizedCancion, sanitizedVideo, perfume, sanitizedLyric, sanitizedDocumental, id],
         (err, respuesta) => {
             if (err) {
