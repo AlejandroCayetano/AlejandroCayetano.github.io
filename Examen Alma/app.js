@@ -6,6 +6,18 @@ var app = express();
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const contieneInyeccionSQL = (texto) => {
+  return /(\b(select|insert|update|delete|drop|alter|create|exec|union|where)\b.*\b(from|into|table|database|values)\b)|(--|\/\*|\*\/|;|@@|char\s*\(\s*\d+\s*\)|convert\s*\(|declare\s+@|set\s+@|exec\s*\(|xp_|sp_|waitfor\s+delay)/i.test(texto);
+};
+
+function validarInyeccionSQL(obj) {
+  for (const key in obj) {
+      if (typeof obj[key] === 'string' && contieneInyeccionSQL(obj[key])) {
+          return true;
+      }
+  }
+  return false;
+}
 
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
@@ -41,6 +53,15 @@ const db = mysql.createConnection({
   // Procesar registro
   app.post('/registro', async (req, res) => {
     const { nombre, correo, contrasena } = req.body;
+    
+    if (validarInyeccionSQL(req.body)) {
+      return res.send(`
+          <script>
+              alert("Se detectó un intento de inyección SQL.");
+              window.history.back();
+          </script>
+      `);
+  }
     const hashedPassword = await bcrypt.hash(contrasena, 10);
   
     db.query('SELECT * FROM usuarios WHERE correo = ?', [correo], (err, resultados) => {
@@ -75,6 +96,16 @@ const db = mysql.createConnection({
   
   // Procesar login
   app.post('/login', (req, res) => {
+
+    if (validarInyeccionSQL(req.body)) {
+      return res.send(`
+          <script>
+              alert("Entrada inválida detectada (inyección SQL).");
+              window.history.back();
+          </script>
+      `);
+  }
+
     const { correo, contrasena } = req.body;
   
     db.query('SELECT * FROM usuarios WHERE correo = ?', [correo], async (err, resultados) => {
@@ -137,6 +168,16 @@ app.get('/agregarUsuario', protegerRuta, (req, res) => {
       });
 
 app.post('/agregarUsuario', protegerRuta, (req, res) => {
+
+  if (validarInyeccionSQL(req.body)) {
+    return res.send(`
+        <script>
+            alert("Se detectó contenido malicioso en el formulario.");
+            window.history.back();
+        </script>
+    `);
+}
+
         let { nombre, edad, album, cancion, video, perfume, lyric, documental } = req.body;
       
         // Validación de tipo de datos (todas las entradas de texto deben ser cadenas)
