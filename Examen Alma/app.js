@@ -19,6 +19,20 @@ function validarInyeccionSQL(obj) {
   return false;
 }
 
+function sanitizeInput(input) {
+  return input.replace(/<[^>]*>/g, '');  
+}
+
+
+function escapeHTML(text) {
+  return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+}
+
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
   secret: 'claveSuperSecreta',
@@ -148,19 +162,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 
-function sanitizeInput(input) {
-    return input.replace(/<[^>]*>/g, '');  
-}
 
-
-function escapeHTML(text) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
 
 //agregar un usuario
 app.get('/agregarUsuario', protegerRuta, (req, res) => {
@@ -531,6 +533,6 @@ app.post('/editarUsuario', protegerRuta, (req, res) => {
     );
 });
 
-app.listen(3000, () => {
-    console.log("Servidor escuchando en el puerto 3000");
+app.listen(3000, '0.0.0.0', () => {
+  console.log("Servidor corriendo en http://10.107.97.74:3000");
 });
